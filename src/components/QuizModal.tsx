@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { quizQuestions } from '../data/mockData';
+import { LanguageType } from './LanguageProvider';
 
 interface QuizModalProps {
   isOpen: boolean;
   onComplete: (answers: string[]) => void;
-  language: 'cs' | 'en';
+  language: LanguageType;
+  t: (key: string) => string;
 }
 
-const QuizModal: React.FC<QuizModalProps> = ({ isOpen, onComplete, language }) => {
+const QuizModal: React.FC<QuizModalProps> = ({ isOpen, onComplete, language, t }) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
 
@@ -32,9 +34,9 @@ const QuizModal: React.FC<QuizModalProps> = ({ isOpen, onComplete, language }) =
         {/* Progress Bar */}
         <div className="mb-6">
           <div className="flex justify-between text-sm text-secondary-600 mb-2">
-            <span>{language === 'cs' ? 'Otázka' : 'Question'} {currentQuestion + 1}/{quizQuestions.length}</span>
-            <span>{Math.round(((currentQuestion + 1) / quizQuestions.length) * 100)}%</span>
-          </div>
+              <span>{t('question')} {currentQuestion + 1}/{quizQuestions.length}</span>
+              <span>{Math.round(((currentQuestion + 1) / quizQuestions.length) * 100)}%</span>
+            </div>
           <div className="w-full bg-secondary-200 rounded-full h-2">
             <div
               className="bg-gradient-to-r from-primary-500 to-romantic-500 h-2 rounded-full transition-all duration-500"
@@ -49,8 +51,8 @@ const QuizModal: React.FC<QuizModalProps> = ({ isOpen, onComplete, language }) =
             {question.question[language]}
           </h3>
           <p className="text-secondary-600 text-sm">
-            {language === 'cs' ? 'Vyberte odpověď, která vás nejlépe vystihuje' : 'Choose the answer that best describes you'}
-          </p>
+              {t('chooseAnswerThatBestDescribesYou')}
+            </p>
         </div>
 
         {/* Options */}
@@ -72,7 +74,7 @@ const QuizModal: React.FC<QuizModalProps> = ({ isOpen, onComplete, language }) =
             onClick={() => onComplete([])}
             className="text-secondary-500 hover:text-secondary-700 text-sm font-medium transition-colors"
           >
-            {language === 'cs' ? 'Přeskočit kvíz' : 'Skip quiz'}
+            {t('skipQuiz')}
           </button>
         </div>
       </div>

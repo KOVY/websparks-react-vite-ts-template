@@ -136,15 +136,15 @@ export const gifts: Gift[] = [
     id: 'rose',
     name: 'Rose',
     icon: '🌹',
-    price: 25,
+    price: 15,
     currency: 'CZK',
-    category: 'basic'
+    category: 'premium'
   },
   {
     id: 'clover',
     name: 'Lucky Clover',
     icon: '🍀',
-    price: 15,
+    price: 12,
     currency: 'CZK',
     category: 'basic'
   },
@@ -152,15 +152,15 @@ export const gifts: Gift[] = [
     id: 'diamond',
     name: 'Diamond',
     icon: '💎',
-    price: 30,
+    price: 25,
     currency: 'CZK',
-    category: 'basic'
+    category: 'vip'
   },
   {
     id: 'bouquet',
     name: 'Bouquet',
     icon: '💐',
-    price: 50,
+    price: 20,
     currency: 'CZK',
     category: 'premium'
   },
@@ -168,9 +168,9 @@ export const gifts: Gift[] = [
     id: 'champagne',
     name: 'Champagne',
     icon: '🍾',
-    price: 75,
+    price: 30,
     currency: 'CZK',
-    category: 'premium'
+    category: 'vip'
   }
 ];
 

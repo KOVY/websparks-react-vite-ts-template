@@ -1,60 +1,49 @@
 import React, { useState } from 'react';
+import { LanguageType } from '../LanguageProvider';
 
 interface PostPurchaseRegistrationProps {
   isOpen: boolean;
   onComplete: (phoneNumber: string) => void;
-  language: 'cs' | 'en';
+  language: LanguageType;
   giftPurchased?: string;
+  t: (key: string) => string;
 }
 
 const PostPurchaseRegistration: React.FC<PostPurchaseRegistrationProps> = ({ 
   isOpen, 
   onComplete, 
   language,
-  giftPurchased 
+  giftPurchased,
+  t 
 }) => {
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   if (!isOpen) return null;
 
-  const texts = {
-    cs: {
-      title: 'Skvělé! Uložte si svůj postup',
-      subtitle: 'Dokončete rychlou registraci, abyste nepřišli o své konverzace a dárky. Zabere to 10 sekund.',
-      phoneLabel: 'Telefonní číslo',
-      phonePlaceholder: '+420 123 456 789',
-      sendCode: 'Odeslat ověřovací kód',
-      otpTitle: 'Ověřte své číslo',
-      otpSubtitle: 'Zadejte 6místný kód',
-      otpPlaceholder: '123456',
-      verify: 'Dokončit registraci',
-      sending: 'Odesílám...',
-      verifying: 'Dokončujem...',
-      giftSent: 'Dárek odeslán!',
-      protection: '🔒 Ochrana vašich konverzací a dárků'
-    },
-    en: {
-      title: 'Great! Save your progress',
-      subtitle: 'Complete quick registration so you don\'t lose your conversations and gifts. Takes 10 seconds.',
-      phoneLabel: 'Phone Number',
-      phonePlaceholder: '+1 234 567 8900',
-      sendCode: 'Send verification code',
-      otpTitle: 'Verify your number',
-      otpSubtitle: 'Enter the 6-digit code',
-      otpPlaceholder: '123456',
-      verify: 'Complete registration',
-      sending: 'Sending...',
-      verifying: 'Completing...',
-      giftSent: 'Gift sent!',
-      protection: '🔒 Protect your conversations and gifts'
-    }
+
+
+  const validatePhoneNumber = (phone: string) => {
+    // Simple validation - can be enhanced with more comprehensive regex
+    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+    return phoneRegex.test(phone.replace(/\s/g, ''));
   };
 
   const handleSendOTP = async () => {
-    if (!phoneNumber.trim()) return;
+    setError('');
+    
+    if (!phoneNumber.trim()) {
+      setError(t('validPhoneError'));
+      return;
+    }
+    
+    if (!validatePhoneNumber(phoneNumber)) {
+      setError(t('validPhoneError'));
+      return;
+    }
     
     setIsLoading(true);
     await new Promise(resolve => window.setTimeout(resolve, 1500));
@@ -72,8 +61,11 @@ const PostPurchaseRegistration: React.FC<PostPurchaseRegistrationProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl p-8 max-w-md w-full animate-slide-up shadow-2xl">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div 
+        className="bg-gradient-to-b from-white to-primary-50 rounded-3xl p-6 max-w-md w-full shadow-2xl"
+        style={{ animation: 'modalAppear 0.5s ease-out forwards' }}
+      >
         {step === 'phone' ? (
           <>
             {/* Success Animation */}
@@ -83,41 +75,82 @@ const PostPurchaseRegistration: React.FC<PostPurchaseRegistrationProps> = ({
               </div>
               {giftPurchased && (
                 <div className="bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-medium mb-4 inline-block">
-                  {texts[language].giftSent}
+                  {t('giftSent')}
                 </div>
               )}
               <h3 className="text-2xl font-bold text-secondary-900 mb-3 font-display">
-                {texts[language].title}
+                {t('greatSaveProgress')}
               </h3>
               <p className="text-secondary-600 leading-relaxed">
-                {texts[language].subtitle}
+                {t('completeQuickRegistration')}
               </p>
             </div>
 
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-semibold text-secondary-700 mb-3">
-                  {texts[language].phoneLabel}
+                  {t('phoneNumber')}
                 </label>
-                <input
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder={texts[language].phonePlaceholder}
-                  className="w-full px-4 py-4 border-2 border-secondary-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg"
-                />
+                <div className="relative">
+                  <input
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder={t('phonePlaceholder')}
+                    className={`w-full px-4 py-4 border-2 rounded-2xl focus:outline-none transition-all duration-300 ${error ? 'border-red-300 focus:ring-red-500' : 'border-secondary-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent'} text-lg`}
+                  />
+                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-secondary-400">
+                    <i className="bi bi-telephone-fill" />
+                  </div>
+                </div>
+                {error && (
+                  <p className="text-red-500 text-xs mt-2 flex items-center">
+                    <i className="bi bi-exclamation-circle mr-1" /> {t('validPhoneError')}
+                  </p>
+                )}
+              </div>
+
+              {/* Benefits Section */}
+              <div className="bg-primary-50 border border-primary-100 rounded-xl p-4">
+                <h3 className="text-xs font-semibold text-secondary-700 mb-3">
+                  {t('whyRegister')}
+                </h3>
+                <div className="space-y-2">
+                  <div className="flex items-center text-xs text-secondary-600">
+                    <i className="bi bi-check-circle text-green-500 mr-2" />
+                    {t('keepConversations')}
+                  </div>
+                  <div className="flex items-center text-xs text-secondary-600">
+                    <i className="bi bi-check-circle text-green-500 mr-2" />
+                    {t('retainGifts')}
+                  </div>
+                  <div className="flex items-center text-xs text-secondary-600">
+                    <i className="bi bi-check-circle text-green-500 mr-2" />
+                    {t('accessFromAnywhere')}
+                  </div>
+                </div>
               </div>
 
               <button
                 onClick={handleSendOTP}
                 disabled={!phoneNumber.trim() || isLoading}
                 className="w-full bg-gradient-to-r from-primary-500 to-romantic-500 text-white py-4 rounded-2xl font-semibold hover:shadow-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-lg"
+                style={{
+                  boxShadow: '0 4px 14px 0 rgba(236, 72, 153, 0.39)'
+                }}
               >
-                {isLoading ? texts[language].sending : texts[language].sendCode}
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                    {t('sending')}
+                  </div>
+                ) : (
+                  t('sendVerificationCode')
+                )}
               </button>
 
               <div className="text-center text-xs text-secondary-500 flex items-center justify-center">
-                {texts[language].protection}
+                <i className="bi bi-shield-check mr-1" /> {t('infoSecurelyStored')}
               </div>
             </div>
           </>
@@ -128,10 +161,10 @@ const PostPurchaseRegistration: React.FC<PostPurchaseRegistrationProps> = ({
                 <i className="bi bi-shield-check-fill text-white text-3xl" />
               </div>
               <h3 className="text-2xl font-bold text-secondary-900 mb-3 font-display">
-                {texts[language].otpTitle}
+                {t('verifyYourNumber')}
               </h3>
               <p className="text-secondary-600 mb-2">
-                {texts[language].otpSubtitle}
+                {t('enter6DigitCode')}
               </p>
               <p className="text-primary-600 font-semibold">{phoneNumber}</p>
             </div>
@@ -142,7 +175,7 @@ const PostPurchaseRegistration: React.FC<PostPurchaseRegistrationProps> = ({
                   type="text"
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder={texts[language].otpPlaceholder}
+                placeholder={t('otpPlaceholder')}
                   className="w-full px-4 py-4 border-2 border-secondary-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-center text-3xl font-mono tracking-widest"
                   maxLength={6}
                 />
@@ -152,8 +185,18 @@ const PostPurchaseRegistration: React.FC<PostPurchaseRegistrationProps> = ({
                 onClick={handleVerifyOTP}
                 disabled={otpCode.length !== 6 || isLoading}
                 className="w-full bg-gradient-to-r from-primary-500 to-romantic-500 text-white py-4 rounded-2xl font-semibold hover:shadow-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-lg"
+                style={{
+                  boxShadow: '0 4px 14px 0 rgba(236, 72, 153, 0.39)'
+                }}
               >
-                {isLoading ? texts[language].verifying : texts[language].verify}
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+                    {t('completing')}
+                  </div>
+                ) : (
+                  t('completeRegistration')
+                )}
               </button>
             </div>
           </>

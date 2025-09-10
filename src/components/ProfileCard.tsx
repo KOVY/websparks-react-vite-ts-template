@@ -1,14 +1,17 @@
 import React from 'react';
 import { User } from '../types';
+import { LanguageType } from './LanguageProvider';
 
 interface ProfileCardProps {
   user: User;
   onLike: () => void;
   onPass: () => void;
   onSuperLike: () => void;
+  language: LanguageType;
+  t: (key: string) => string;
 }
 
-const ProfileCard: React.FC<ProfileCardProps> = ({ user, onLike, onPass, onSuperLike }) => {
+const ProfileCard: React.FC<ProfileCardProps> = ({ user, onLike, onPass, onSuperLike, language, t }) => {
   return (
     <div className="relative w-full max-w-sm mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden animate-slide-up">
       {/* Main Photo */}
@@ -27,7 +30,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ user, onLike, onPass, onSuper
         {user.isOnline && (
           <div className="absolute top-4 right-4 flex items-center space-x-1 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
             <div className="w-2 h-2 bg-white rounded-full animate-pulse-soft" />
-            <span>Online</span>
+            <span>{t('online')}</span>
           </div>
         )}
         
@@ -48,7 +51,7 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ user, onLike, onPass, onSuper
             <i className="bi bi-geo-alt-fill" />
             <span>{user.location}</span>
             <span>•</span>
-            <span>{user.distance}km away</span>
+            <span>{user.distance} {t('km')} {t('away')}</span>
           </div>
         </div>
       </div>

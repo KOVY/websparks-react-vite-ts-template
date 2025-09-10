@@ -1,55 +1,55 @@
 import React, { useState } from 'react';
+import { LanguageType } from '../LanguageProvider';
+
 
 interface RegistrationModalProps {
   isOpen: boolean;
   onComplete: (phoneNumber: string) => void;
-  language: 'cs' | 'en';
+  language: LanguageType;
+  t: (key: string) => string;
 }
 
-const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onComplete, language }) => {
+const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onComplete, language, t }) => {
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [countryCode, setCountryCode] = useState('+420'); // Default to Czech Republic
   const [otpCode, setOtpCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Common country codes for quick selection
+  const commonCountries = [
+    { code: '+1', name: 'USA/Canada', flag: '🇺🇸' },
+    { code: '+44', name: 'United Kingdom', flag: '🇬🇧' },
+    { code: '+49', name: 'Germany', flag: '🇩🇪' },
+    { code: '+33', name: 'France', flag: '🇫🇷' },
+    { code: '+34', name: 'Spain', flag: '🇪🇸' },
+    { code: '+81', name: 'Japan', flag: '🇯🇵' },
+    { code: '+61', name: 'Australia', flag: '🇦🇺' },
+    { code: '+1', name: 'Canada', flag: '🇨🇦' },
+    { code: '+420', name: 'Czech Republic', flag: '🇨🇿' },
+  ];
+  
+  // Format phone number by removing non-digit characters except '+'
+  const formatPhoneNumber = (value: string): string => {
+    return value.replace(/[^+\d]/g, '');
+  };
+  
+  // Get full phone number with country code
+  const getFullPhoneNumber = (): string => {
+    return `${countryCode}${phoneNumber.replace(/^[+]/, '')}`;
+  };
 
   if (!isOpen) return null;
 
-  const texts = {
-    cs: {
-      title: 'Dokončete registraci',
-      subtitle: 'Pro pokračování v konverzaci se prosím zaregistrujte',
-      phoneLabel: 'Telefonní číslo',
-      phonePlaceholder: '+420 123 456 789',
-      sendCode: 'Odeslat kód',
-      otpTitle: 'Ověřte své číslo',
-      otpSubtitle: 'Zadejte 6místný kód, který jsme vám poslali na',
-      otpPlaceholder: '123456',
-      verify: 'Ověřit',
-      resend: 'Poslat znovu',
-      sending: 'Odesílám...',
-      verifying: 'Ověřujem...'
-    },
-    en: {
-      title: 'Complete Registration',
-      subtitle: 'Please register to continue the conversation',
-      phoneLabel: 'Phone Number',
-      phonePlaceholder: '+1 234 567 8900',
-      sendCode: 'Send Code',
-      otpTitle: 'Verify Your Number',
-      otpSubtitle: 'Enter the 6-digit code we sent to',
-      otpPlaceholder: '123456',
-      verify: 'Verify',
-      resend: 'Resend',
-      sending: 'Sending...',
-      verifying: 'Verifying...'
-    }
-  };
 
   const handleSendOTP = async () => {
-    if (!phoneNumber.trim()) return;
+    if (!phoneNumber.trim() || phoneNumber.length < 8) return;
     
     setIsLoading(true);
-    // Simulate API call
+    // Simulate API call with full phone number
+    const fullPhoneNumber = getFullPhoneNumber();
+    console.log('Sending OTP to:', fullPhoneNumber);
+    
     await new Promise(resolve => window.setTimeout(resolve, 1500));
     setIsLoading(false);
     setStep('otp');
@@ -62,7 +62,7 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onComplet
     // Simulate API call
     await new Promise(resolve => window.setTimeout(resolve, 1500));
     setIsLoading(false);
-    onComplete(phoneNumber);
+    onComplete(getFullPhoneNumber());
   };
 
   return (
@@ -75,23 +75,44 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onComplet
                 <i className="bi bi-phone-fill text-white text-2xl" />
               </div>
               <h3 className="text-2xl font-bold text-secondary-900 mb-2 font-display">
-                {texts[language].title}
+                {t('completeRegistration')}
               </h3>
-              <p className="text-secondary-600">{texts[language].subtitle}</p>
+              <p className="text-secondary-600">{t('registerToContinue')}</p>
             </div>
 
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-secondary-700 mb-2">
-                  {texts[language].phoneLabel}
+                  {t('phoneNumber')}
                 </label>
-                <input
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder={texts[language].phonePlaceholder}
-                  className="w-full px-4 py-3 border border-secondary-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
+                <div className="flex space-x-3">
+                  <div className="relative flex-1 min-w-[100px]">
+                    <select
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value)}
+                      className="w-full appearance-none px-4 py-3 pr-8 border border-secondary-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
+                    >
+                      {commonCountries.map((country) => (
+                        <option key={country.code} value={country.code}>
+                          {country.flag} {country.code} ({country.name})
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-secondary-500">
+                      <i className="bi bi-chevron-down" />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
+                      placeholder={t('phonePlaceholder')}
+                      className="w-full px-4 py-3 border border-secondary-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      inputMode="tel"
+                    />
+                  </div>
+                </div>
               </div>
 
               <button
@@ -99,7 +120,7 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onComplet
                 disabled={!phoneNumber.trim() || isLoading}
                 className="w-full bg-gradient-to-r from-primary-500 to-romantic-500 text-white py-3 rounded-2xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                {isLoading ? texts[language].sending : texts[language].sendCode}
+                {isLoading ? t('sending') : t('sendCode')}
               </button>
             </div>
           </>
@@ -110,12 +131,12 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onComplet
                 <i className="bi bi-shield-check-fill text-white text-2xl" />
               </div>
               <h3 className="text-2xl font-bold text-secondary-900 mb-2 font-display">
-                {texts[language].otpTitle}
+                {t('verifyYourNumber')}
               </h3>
               <p className="text-secondary-600">
-                {texts[language].otpSubtitle}
+                {t('enterCodeSent')}
               </p>
-              <p className="text-primary-600 font-medium mt-1">{phoneNumber}</p>
+              <p className="text-primary-600 font-medium mt-1">{getFullPhoneNumber()}</p>
             </div>
 
             <div className="space-y-6">
@@ -124,7 +145,7 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onComplet
                   type="text"
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder={texts[language].otpPlaceholder}
+                  placeholder={t('otpPlaceholder')}
                   className="w-full px-4 py-3 border border-secondary-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-center text-2xl font-mono tracking-widest"
                   maxLength={6}
                 />
@@ -135,7 +156,7 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onComplet
                 disabled={otpCode.length !== 6 || isLoading}
                 className="w-full bg-gradient-to-r from-primary-500 to-romantic-500 text-white py-3 rounded-2xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                {isLoading ? texts[language].verifying : texts[language].verify}
+                {isLoading ? t('verifying') : t('verify')}
               </button>
 
               <div className="text-center">
@@ -143,7 +164,7 @@ const RegistrationModal: React.FC<RegistrationModalProps> = ({ isOpen, onComplet
                   onClick={() => setStep('phone')}
                   className="text-secondary-500 hover:text-secondary-700 text-sm font-medium transition-colors"
                 >
-                  {texts[language].resend}
+                  {t('resend')}
                 </button>
               </div>
             </div>

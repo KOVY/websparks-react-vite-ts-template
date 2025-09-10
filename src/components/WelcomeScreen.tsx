@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
+import { LanguageType } from './LanguageProvider';
 
 interface WelcomeScreenProps {
   user: User;
   onSwipeRight: () => void;
   onSwipeLeft: () => void;
-  language: 'cs' | 'en';
+  language: LanguageType;
+  t: (key: string) => string;
 }
 
-const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ user, onSwipeRight, onSwipeLeft, language }) => {
+const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ user, onSwipeRight, onSwipeLeft, language, t }) => {
   const [showSwipeHint, setShowSwipeHint] = useState(true);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setShowSwipeHint(false);
-    }, 3000);
+    }, 5000); // Dlouší zobrazení nápovědy pro swipování
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -38,18 +40,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ user, onSwipeRight, onSwi
     return '🌍';
   };
 
-  const texts = {
-    cs: {
-      swipeHint: 'Swipněte doprava pro lajk, doleva pro přeskočení',
-      chatButton: 'Začít chat',
-      passButton: 'Přeskočit'
-    },
-    en: {
-      swipeHint: 'Swipe right to like, left to pass',
-      chatButton: 'Start Chat',
-      passButton: 'Pass'
-    }
-  };
+  // Translation keys are handled by the t() function provided via props
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-black">
@@ -70,7 +61,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ user, onSwipeRight, onSwi
       {showSwipeHint && (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
           <div className="bg-black/50 backdrop-blur-sm text-white px-6 py-3 rounded-full text-sm font-medium animate-fade-in">
-            {texts[language].swipeHint}
+            {t('swipeRightToLike')}
           </div>
           <div className="flex justify-center mt-4 space-x-8">
             <div className="w-12 h-12 border-2 border-white/50 rounded-full flex items-center justify-center animate-bounce-gentle">
@@ -83,64 +74,48 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ user, onSwipeRight, onSwi
         </div>
       )}
 
-      {/* Online Status */}
+      {/* Minimalní indikátory */}
       {user.isOnline && (
-        <div className="absolute top-8 right-6 flex items-center space-x-2 bg-green-500/90 backdrop-blur-sm text-white px-3 py-2 rounded-full text-sm font-medium z-20">
-          <div className="w-2 h-2 bg-white rounded-full animate-pulse-soft" />
-          <span>{language === 'cs' ? 'Online' : 'Online'}</span>
+        <div className="absolute top-6 right-6 flex items-center space-x-1 bg-green-500/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium z-20">
+          <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse-soft" />
+          <span>{t('online')}</span>
         </div>
       )}
 
-      {/* Verified Badge */}
       {user.verified && (
-        <div className="absolute top-8 left-6 bg-primary-500/90 backdrop-blur-sm text-white p-3 rounded-full z-20">
-          <i className="bi bi-patch-check-fill text-lg" />
+        <div className="absolute top-6 left-6 bg-primary-500/90 backdrop-blur-sm text-white p-1.5 rounded-full z-20">
+          <i className="bi bi-patch-check-fill text-sm" />
         </div>
       )}
 
       {/* User Info */}
-      <div className="absolute bottom-0 left-0 right-0 p-8 text-white z-20">
-        <div className="mb-6">
-          <div className="flex items-center space-x-3 mb-3">
-            <h1 className="text-4xl font-bold font-display">{user.name}</h1>
+      <div className="absolute bottom-0 left-0 right-0 p-6 text-white z-20">
+        <div className="mb-8">
+          <div className="flex items-center space-x-3 mb-2">
+            <h1 className="text-4xl md:text-5xl font-bold font-display">{user.name}</h1>
             <span className="text-2xl font-medium opacity-90">{user.age}</span>
             <span className="text-3xl">{getCountryFlag(user.location)}</span>
           </div>
           
-          <div className="flex items-center space-x-2 text-lg opacity-90 mb-4">
-            <i className="bi bi-geo-alt-fill" />
-            <span>{user.location.split(',')[0]}</span>
-          </div>
-          
-          <p className="text-lg leading-relaxed opacity-95 mb-6 max-w-sm">
+          <p className="text-lg leading-relaxed opacity-95 mb-6 max-w-md line-clamp-3">
             {user.bio}
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-center space-x-6">
+        <div className="flex justify-center space-x-10 mb-6">
           <button
             onClick={onSwipeLeft}
             className="w-16 h-16 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 border border-white/30"
           >
-            <i className="bi bi-x-lg text-white text-2xl" />
+            <i className="bi bi-arrow-left text-white text-xl" />
           </button>
           
           <button
             onClick={onSwipeRight}
-            className="w-20 h-20 bg-gradient-to-r from-primary-500 to-romantic-500 hover:from-primary-600 hover:to-romantic-600 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-2xl"
+            className="w-20 h-20 bg-gradient-to-r from-primary-500 to-romantic-500 hover:from-primary-600 hover:to-romantic-600 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-lg"
           >
             <i className="bi bi-heart-fill text-white text-2xl animate-bounce-gentle" />
-          </button>
-        </div>
-
-        {/* Alternative Chat Button */}
-        <div className="text-center mt-6">
-          <button
-            onClick={onSwipeRight}
-            className="bg-white/10 backdrop-blur-sm border border-white/30 text-white px-8 py-3 rounded-full font-medium hover:bg-white/20 transition-all duration-300"
-          >
-            {texts[language].chatButton}
           </button>
         </div>
       </div>

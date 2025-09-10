@@ -39,6 +39,6 @@ export interface UserPreferences {
   ageRange: [number, number];
   maxDistance: number;
   interests: string[];
-  language: 'cs' | 'en';
-  currency: 'CZK' | 'EUR';
+  language: 'cs' | 'en' | 'es' | 'de' | 'fr';
+  currency: 'CZK' | 'EUR' | 'USD' | 'GBP' | 'JPY' | 'AUD' | 'CAD';
 }

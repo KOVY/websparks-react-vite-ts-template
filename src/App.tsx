@@ -3,28 +3,50 @@ import WelcomeScreen from './components/WelcomeScreen';
 import VisualQuizModal from './components/VisualQuizModal';
 import ChatInterface from './components/ChatInterface';
 import PostPurchaseRegistration from './components/PostPurchaseRegistration';
+import LanguageProvider, { useLanguage } from './components/LanguageProvider';
+import { RegionalContentProvider } from './components/RegionalContentProvider';
+import CurrencyProvider, { useCurrency } from './components/CurrencyProvider';
 import { mockUsers } from './data/mockData';
 import { User, Message, UserPreferences } from './types';
 
 type AppState = 'welcome' | 'quiz' | 'chat' | 'registration';
 
-function App() {
+// Hlavní komponenta aplikace
+const AppContent: React.FC = () => {
   const [currentState, setCurrentState] = useState<AppState>('welcome');
   const [currentUserIndex, setCurrentUserIndex] = useState(0);
   const [currentChatUser, setCurrentChatUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageCount, setMessageCount] = useState(0);
   const [isRegistered, setIsRegistered] = useState(false);
-  const [language, setLanguage] = useState<'cs' | 'en'>('en');
-  const [currency, setCurrency] = useState<'CZK' | 'EUR'>('EUR');
   const [lastPurchasedGift, setLastPurchasedGift] = useState<string>('');
+  // Použití jazykového kontextu
+  const { language, setLanguage, t } = useLanguage();
+  // Použití měnové kontextu
+  const { currency, setCurrency } = useCurrency();
+  
   const [preferences, setPreferences] = useState<UserPreferences>({
     ageRange: [18, 35],
     maxDistance: 50,
     interests: [],
-    language: 'en',
-    currency: 'EUR'
+    language,
+    currency
   });
+  
+  // Synchronizace preferencí s jazykem a měnou
+  useEffect(() => {
+    setPreferences(prev => ({
+      ...prev,
+      language
+    }));
+  }, [language]);
+  
+  useEffect(() => {
+    setPreferences(prev => ({
+      ...prev,
+      currency
+    }));
+  }, [currency]);
 
   const currentUser = mockUsers[currentUserIndex];
 
@@ -86,6 +108,24 @@ function App() {
         'Hey! I love your profile!',
         'Hi! What are you up to tonight?',
         'Hey! You have a beautiful smile! 😍'
+      ],
+      es: [
+        '¡Hola! ¿Cómo estás? 😊',
+        '¡Hey! Me encanta tu perfil!',
+        '¡Hola! ¿Qué haces esta noche?',
+        '¡Hey! Tienes una hermosa sonrisa! 😍'
+      ],
+      de: [
+        'Hallo! Wie geht es dir? 😊',
+        'Hey! Ich liebe dein Profil!',
+        'Hallo! Was machst du heute Abend?',
+        'Hey! Du hast ein wunderschönes Lächeln! 😍'
+      ],
+      fr: [
+        'Salut! Comment ça va? 😊',
+        'Hey! J\'adore ton profil!',
+        'Salut! Qu\'est-ce que tu fais ce soir?',
+        'Hey! Tu as un beau sourire! 😍'
       ]
     };
 
@@ -140,6 +180,33 @@ function App() {
               'Thanks for the message! ❤️',
               'Wow, that\'s amazing!',
               'We have so much in common!'
+            ],
+            es: [
+              '¡Eso suena genial! 😄',
+              'Interesante, cuéntame más!',
+              '¡Estoy de acuerdo contigo!',
+              '¡Jaja, eso es gracioso! 😂',
+              '¡Gracias por el mensaje! ❤️',
+              '¡Wow, eso es increíble!',
+              '¡Tenemos mucho en común!'
+            ],
+            de: [
+              'Das klingt toll! 😄',
+              'Interessant, erzähl mir mehr!',
+              'Ich stimme dir zu!',
+              'Haha, das ist lustig! 😂',
+              'Danke für die Nachricht! ❤️',
+              'Wow, das ist erstaunlich!',
+              'Wir haben so viel gemeinsam!'
+            ],
+            fr: [
+              'Cela a l\'air génial ! 😄',
+              'Intéressant, en parle plus !',
+              'Je suis d\'accord avec toi !',
+              'Haha, c\'est drôle ! 😂',
+              'Merci pour le message ! ❤️',
+              'Wow, c\'est incroyable !',
+              'Nous avons tellement de choses en commun !'
             ]
           };
           
@@ -178,7 +245,13 @@ function App() {
       id: (Date.now() + 2).toString(),
       senderId: currentChatUser?.id || '',
       receiverId: 'me',
-      content: language === 'cs' ? 'Děkuji za krásný dárek! 😍💕' : 'Thank you for the beautiful gift! 😍💕',
+      content: {
+        cs: 'Děkuji za krásný dárek! 😍💕',
+        en: 'Thank you for the beautiful gift! 😍💕',
+        es: '¡Gracias por el hermoso regalo! 😍💕',
+        de: 'Danke für das schöne Geschenk! 😍💕',
+        fr: 'Merci pour le beau cadeau ! 😍💕'
+      }[language],
       timestamp: new Date(),
       type: 'text'
     };
@@ -194,28 +267,56 @@ function App() {
     handleSwipeLeft();
   };
 
-  const toggleLanguage = () => {
-    const newLang = language === 'cs' ? 'en' : 'cs';
-    setLanguage(newLang);
-    setCurrency(newLang === 'cs' ? 'CZK' : 'EUR');
+  // Přepnutí mezi podporovanými jazyky
+  const nextLanguage = () => {
+    const languages = ['cs', 'en', 'es', 'de', 'fr'] as const;
+    const currentIndex = languages.indexOf(language);
+    const nextIndex = (currentIndex + 1) % languages.length;
+    setLanguage(languages[nextIndex]);
+    // Nastavení měny podle jazyka
+    if (languages[nextIndex] === 'cs') {
+      setCurrency('CZK');
+    } else if (languages[nextIndex] === 'en') {
+      setCurrency('USD');
+    } else if (languages[nextIndex] === 'de' || languages[nextIndex] === 'fr') {
+      setCurrency('EUR');
+    } else if (languages[nextIndex] === 'es') {
+      setCurrency('EUR'); // Using EUR for Spanish as well
+    }
+  };
+
+  // Currency selector function
+  const nextCurrency = () => {
+    const currencies = ['CZK', 'EUR', 'USD', 'GBP', 'JPY', 'AUD', 'CAD'] as const;
+    const currentIndex = currencies.indexOf(currency);
+    const nextIndex = (currentIndex + 1) % currencies.length;
+    setCurrency(currencies[nextIndex]);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-romantic-50 to-accent-50">
       {currentState === 'welcome' && (
         <>
-          {/* Language Toggle - Only on Welcome Screen */}
+          {/* Language and Currency Selectors - Only on Welcome Screen */}
           <div className="absolute top-6 right-6 z-30 flex items-center space-x-3">
             <button
-              onClick={toggleLanguage}
+              onClick={nextLanguage}
               className="px-4 py-2 bg-white/20 backdrop-blur-md rounded-full text-sm font-medium text-white hover:bg-white/30 transition-all duration-300 border border-white/30"
+              title={t('changeLanguage')}
             >
-              {language === 'cs' ? '🇨🇿 CZ' : '🇬🇧 EN'}
+              {language === 'cs' ? '🇨🇿 CZ' : 
+               language === 'en' ? '🇬🇧 EN' :
+               language === 'es' ? '🇪🇸 ES' :
+               language === 'de' ? '🇩🇪 DE' : '🇫🇷 FR'}
             </button>
             
-            <div className="px-3 py-2 bg-accent-500/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30">
+            <button
+              onClick={nextCurrency}
+              className="px-3 py-2 bg-accent-500/20 backdrop-blur-md text-white rounded-full text-sm font-medium border border-white/30 hover:bg-accent-500/30 transition-all duration-300"
+              title="Change currency"
+            >
               {currency}
-            </div>
+            </button>
           </div>
 
           <WelcomeScreen
@@ -223,20 +324,22 @@ function App() {
             onSwipeRight={handleSwipeRight}
             onSwipeLeft={handleSwipeLeft}
             language={language}
+            t={t}
           />
         </>
       )}
 
       {currentState === 'chat' && (
         <ChatInterface
-          user={currentChatUser!}
-          messages={messages}
-          onSendMessage={handleSendMessage}
-          onBack={handleBackToProfiles}
-          messageCount={messageCount}
-          language={language}
-          currency={currency}
-        />
+        user={currentChatUser!}
+        messages={messages}
+        onSendMessage={handleSendMessage}
+        onBack={handleBackToProfiles}
+        messageCount={messageCount}
+        language={language}
+        currency={currency}
+        t={t}
+      />
       )}
 
       {/* Modals */}
@@ -244,6 +347,7 @@ function App() {
         isOpen={currentState === 'quiz'}
         onComplete={handleQuizComplete}
         language={language}
+        t={t}
       />
 
       <PostPurchaseRegistration
@@ -251,8 +355,22 @@ function App() {
         onComplete={handleRegistrationComplete}
         language={language}
         giftPurchased={lastPurchasedGift}
+        t={t}
       />
     </div>
+  );
+}
+
+// Hlavní komponenta s LanguageProviderem a CurrencyProviderem
+function App() {
+  return (
+    <LanguageProvider>
+      <RegionalContentProvider>
+        <CurrencyProvider>
+          <AppContent />
+        </CurrencyProvider>
+      </RegionalContentProvider>
+    </LanguageProvider>
   );
 }
 
